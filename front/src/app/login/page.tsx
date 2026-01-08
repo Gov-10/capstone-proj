@@ -106,6 +106,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+
 
   const handleLogin = async () => {
     try {
@@ -232,76 +234,132 @@ export default function LoginPage() {
                   >
                     <div className="relative bg-slate-900/80 backdrop-blur-xl p-8 sm:p-10 rounded-3xl border border-slate-800 shadow-2xl">
                       <motion.button
-                        onClick={() => setShowLogin(false)}
+                        onClick={() => {
+                          setShowLogin(false);
+                          setShowForgotPassword(false);
+                        }}
+                        
                         className="absolute top-4 right-4 p-2 rounded-full bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
                       >
                         <X className="w-5 h-5 text-slate-400" />
                       </motion.button>
 
-                      <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-                        Welcome Back
-                      </h2>
-                      <p className="text-slate-400 mb-8">
-                        Sign in to continue
-                      </p>
+                      {!showForgotPassword ? (
+                        <>
+                        <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+                          Welcome Back
+                        </h2>
+                        <p className="text-slate-400 mb-8">
+                          Sign in to continue
+                        </p>
 
-                      {/* Email */}
-                      <div className="mb-5">
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
-                        <div className="relative">
-                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                          <input
-                            type="email"
-                            placeholder="you@example.com"
-                            className="w-full pl-12 pr-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            onKeyDown={handleKeyPress}
-                          />
+                        {/* Email */}
+                        <div className="mb-5">
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+                          <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                            <input
+                              type="email"
+                              placeholder="you@example.com"
+                              className="w-full pl-12 pr-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              onKeyDown={handleKeyPress}
+                            />
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Password */}
-                      <div className="mb-6">
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
-                        <div className="relative">
-                          <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                          <input
-                            type="password"
-                            placeholder="••••••••"
-                            className="w-full pl-12 pr-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            onKeyDown={handleKeyPress}
-                          />
+                        {/* Password */}
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                          <div className="relative">
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                            <input
+                              type="password"
+                              placeholder="••••••••"
+                              className="w-full pl-12 pr-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              onKeyDown={handleKeyPress}
+                            />
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Login Button */}
-                      <motion.button
-                        onClick={handleLogin}
-                        disabled={loading || !email || !password}
-                        className={`w-full py-4 rounded-xl font-semibold text-white transition-all duration-300 ${
-                          loading || !email || !password
-                            ? "bg-slate-700 cursor-not-allowed"
-                            : "bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg hover:shadow-blue-500/30"
-                        }`}
-                      >
-                        {loading ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Signing in...
-                          </span>
-                        ) : (
-                          "Sign In"
-                        )}
-                      </motion.button>
+                        {/* Login Button */}
+                        <motion.button
+                          onClick={handleLogin}
+                          disabled={loading || !email || !password}
+                          className={`w-full py-4 rounded-xl font-semibold text-white transition-all duration-300 ${
+                            loading || !email || !password
+                              ? "bg-slate-700 cursor-not-allowed"
+                              : "bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg hover:shadow-blue-500/30"
+                          }`}
+                        >
+                          {loading ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                              Signing in...
+                            </span>
+                          ) : (
+                            "Sign In"
+                          )}
+                        </motion.button>
 
-                      <div className="mt-6 text-center">
-                        <a href="#" className="text-sm text-slate-400 hover:text-blue-400">
-                          Forgot your password?
-                        </a>
-                      </div>
+                        <div className="mt-6 text-center">
+                          <button
+                            onClick={() => setShowForgotPassword(true)}
+                            className="text-sm text-slate-400 hover:text-blue-400"
+                          >
+                            Forgot your password?
+                          </button>
+
+                        </div>
+                      </>
+                      ) : (
+                        <>
+                          {/* ===== FORGOT PASSWORD UI (NEW) ===== */}
+
+                          <button
+                            onClick={() => setShowForgotPassword(false)}
+                            className="text-sm text-slate-400 hover:text-blue-400 mb-6"
+                          >
+                            ← Back to login
+                          </button>
+
+                          <h2 className="text-2xl font-bold mb-2 text-white">
+                            Forgot Password
+                          </h2>
+
+                          <p className="text-slate-400 mb-6 text-sm">
+                            Enter your email and we’ll send reset instructions.
+                          </p>
+
+                          <div className="mb-6">
+                            <label className="block text-sm font-medium text-slate-300 mb-2">
+                              Email
+                            </label>
+                            <input
+                              type="email"
+                              placeholder="you@example.com"
+                              className="w-full px-4 py-3 bg-slate-800/50 text-white rounded-xl border border-slate-700"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                            />
+                          </div>
+
+                          <button
+                            onClick={() =>
+                              alert(
+                                "If this email exists, a password reset link will be sent."
+                              )
+                            }
+                            disabled={!email}
+                            className="w-full py-4 rounded-xl font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600"
+                          >
+                            Send Reset Link
+                          </button>
+                        </>
+                      )}
                     </div>
                   </motion.div>
                 )}
