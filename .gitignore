@@ -7,4 +7,15 @@ keys.json
 database.db
 keys.json.base64
 capstone_fastapi.pem
+
+# Python
+__pycache__/
+
+# Local environments
+venv/
+.venv/
+
+# IDE/editor
+.vscode/
+.idea/
 *.pyc
