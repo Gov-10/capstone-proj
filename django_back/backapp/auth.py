@@ -13,7 +13,13 @@ USER_POOL_ID = os.getenv("USER_POOL_ID")
 USER_POOL_CLIENT_ID = os.getenv("USER_POOL_CLIENT_ID")
 
 JWKS_URL = f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com/{USER_POOL_ID}/.well-known/jwks.json"
-JWKS = requests.get(JWKS_URL).json()["keys"]
+
+# Initialize JWKS with fallback for missing config
+try:
+    JWKS = requests.get(JWKS_URL, timeout=5).json()["keys"] if COGNITO_REGION and USER_POOL_ID else []
+except Exception as e:
+    print(f"Warning: Could not fetch JWKS from Cognito: {e}")
+    JWKS = []
 
 
 def validate_token(token: str):

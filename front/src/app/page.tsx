@@ -155,8 +155,9 @@ export default function SignupPage() {
         options: { userAttributes: { email } },
       });
       setStep("confirm");
-    } catch (err: any) {
-      alert(err.message || "Error signing up");
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Error signing up";
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -168,8 +169,9 @@ export default function SignupPage() {
       await confirmSignUp({ username: email, confirmationCode: code });
       alert("✅ Signup confirmed! Redirecting to login...");
       setTimeout(() => router.push("/login"), 1500);
-    } catch (err: any) {
-      alert(err.message || "Error confirming signup");
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "Error confirming signup";
+      alert(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -544,7 +546,7 @@ export default function SignupPage() {
                               Verify Email
                             </h2>
                             <p className="text-slate-400 mb-2 text-center">
-                              We've sent a code to
+                              We&apos;ve sent a code to
                             </p>
                             <p className="text-purple-400 mb-6 text-center font-medium">
                               {email}
@@ -600,7 +602,7 @@ export default function SignupPage() {
                             {/* Resend code */}
                             <div className="mt-4 text-center">
                               <button className="text-sm text-slate-400 hover:text-purple-400 transition-colors">
-                                Didn't receive the code? Resend
+                                Didn&apos;t receive the code? Resend
                               </button>
                             </div>
                           </motion.div>

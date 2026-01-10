@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request, status, Depends
 from fastapi.responses import JSONResponse
+from fastapi_agents.auth import get_current_user
+from fastapi.middleware.cors import CORSMiddleware
 import os
 import io
 import boto3
@@ -7,13 +9,14 @@ from dotenv import load_dotenv
 import threading
 import json
 from PIL import Image, ImageEnhance, ImageFilter
-from fastapi.middleware.cors import CORSMiddleware
 import fitz
 import pytesseract
 import hashlib
 from schemas import StatusRequest, StatusResponse, ErrorResponse, HealthResponse, ValidationErrorResponse
 from pydantic import ValidationError
-from typing import Union
+from typing import Union,Any
+
+
 #COMMENTS TO BE ADDED LATER
 load_dotenv()
 
@@ -37,6 +40,7 @@ Session = None
 SessionDep = None
 User = None
 ChatHistory = None
+
 
 # Optional database wiring
 try:
@@ -429,7 +433,10 @@ Chunk Summaries:
 
 
 @app.get("/status", response_model=StatusResponse)
-async def check(user=Depends(get_current_user), session: SessionDep = None) -> StatusResponse:
+async def check(
+    user=Depends(get_current_user),
+    session=Depends(get_session)
+) -> StatusResponse:
     """
     Process uploaded PDF document and return legal analysis.
 
