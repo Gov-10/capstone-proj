@@ -398,7 +398,7 @@ const isPasswordValid = Object.values(passwordRules).every(Boolean);
                       {/* Close button */}
                       <motion.button
                         onClick={() => setShowForm(false)}
-                        className="absolute top-4 right-4 p-2 rounded-full bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                        className="absolute top-4 right-4 p-2 rounded-full bg-slate-800/50 hover:bg-slate-700/50 transition-colors z-50"
                         whileHover={{ scale: 1.1, rotate: 90 }}
                         whileTap={{ scale: 0.9 }}
                       >
