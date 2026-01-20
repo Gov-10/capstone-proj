@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from google.cloud import pubsub_v1
 import threading
 import json
-from agents.agent import get_agent
 from fastapi import Depends
 from auth import get_current_user
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +16,9 @@ import hashlib
 from schemas import StatusRequest, StatusResponse, ErrorResponse, HealthResponse, ValidationErrorResponse
 from pydantic import ValidationError
 from typing import Union
-#COMMENTS TO BE ADDED LATER
+import time
+from agents.langgraph_agent import analyze_legal_document
+
 load_dotenv()
 redis_client = Redis(
     host=os.getenv("REDIS_URL"),
@@ -132,45 +133,28 @@ def extract_pdf_text(pdf):
     return final_text
 
 
-def chunk_text(text, chunk_size=4000):
-    return [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
-
-def summarize_chunk(chunk: str):
-    prompt = f"""
-You are a Legal Document Chunk Summarizer.
-Summarize the following part of a legal document factually,
-without legal advice or opinions.
-
-Chunk:
----------------------
-{chunk}
----------------------
-"""
-    res = get_agent()(prompt)
-    return res.message["content"][0]["text"].strip()
-
-
-def final_legal_analysis(chunk_summaries):
-    prompt = f"""
-You are a Legal Document Intelligence Agent.
-
-You will receive summarized chunks of a long legal document.
-Using ONLY the information in those summaries, generate:
-
-1. A complete overall summary
-2. Identified Indian legal sections (IT Act, IPC, Constitution etc.)
-3. Factual context/explanation for each section
-4. Highlight red flags (ambiguities, missing data, contradictions)
-5. Do NOT provide legal advice
-6. End with: "Disclaimer: This is an automated analysis, not legal advice."
-
-Chunk Summaries:
--------------------------
-{json.dumps(chunk_summaries, indent=2)}
--------------------------
-"""
-    res = get_agent()(prompt)
-    return res.message["content"][0]["text"].strip()
+def validate_document_text(text: str) -> tuple[bool, str]:
+    """
+    Validate extracted document text before processing (Phase 6: Edge case handling)
+    
+    Returns:
+        tuple: (is_valid, error_message)
+    """
+    # Minimum length check
+    if not text or len(text.strip()) < 50:
+        return False, "Document contains insufficient readable text (minimum 50 characters required)"
+    
+    # Maximum length check (prevent timeout on extremely large docs)
+    max_length = 500000  # 500K characters limit
+    if len(text) > max_length:
+        return False, f"Document too large (maximum {max_length} characters allowed)"
+    
+    # Check if document is mostly readable text (not corrupted)
+    printable_chars = sum(1 for c in text if c.isprintable() or c.isspace())
+    if printable_chars / len(text) < 0.8:  # At least 80% printable
+        return False, "Document appears to be corrupted or contains unreadable content"
+    
+    return True, ""
 
 
 @app.get("/status", response_model=StatusResponse)
@@ -228,7 +212,7 @@ async def check(user=Depends(get_current_user), session: SessionDep = None) -> S
             )
 
         # Validate file size (max 50MB)
-        max_size = 50 * 1024 * 1024  # 50MB
+        max_size = 50 * 1024 * 1024 
         if len(content) > max_size:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
@@ -253,11 +237,12 @@ async def check(user=Depends(get_current_user), session: SessionDep = None) -> S
                 detail=f"Failed to extract text from PDF: {str(e)}"
             )
 
-        # Validate extracted text
-        if not pdf_text or len(pdf_text.strip()) < 50:
+        #Enhanced validation for edge cases
+        is_valid, validation_error = validate_document_text(pdf_text)
+        if not is_valid:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="The uploaded document contains insufficient readable text (minimum 50 characters required)"
+                detail=validation_error
             )
 
         # Check cache
@@ -281,53 +266,35 @@ async def check(user=Depends(get_current_user), session: SessionDep = None) -> S
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Database error: {str(e)}"
             )
-        print("📌 Splitting PDF into chunks...")
+        
+
+        print("🚀 Running LangGraph Legal Analysis...")
         try:
-            chunks = chunk_text(pdf_text)
+            start_time = time.time()
+            
+            # Use LangGraph agent for analysis
+            final_output = analyze_legal_document(pdf_text)
+            
+            end_time = time.time()
+            processing_time = (end_time - start_time) * 1000 
+            
+            print(f"  Agent analysis completed in {processing_time:.2f}ms")
+            print(f"   References found: {final_output.get('metadata', {}).get('references_found', 0)}")
+            print(f"   API calls made: {final_output.get('metadata', {}).get('api_calls_made', 0)}")
+            print(f"   Legal sections: {len(final_output.get('legal_sections', []))}")
+            
+            # Convert to JSON string for storage and caching
+            final_output_str = json.dumps(final_output, indent=2)
+            
         except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Failed to process document chunks: {str(e)}"
-            )
-
-        if not chunks:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Document could not be split into processable chunks"
-            )
-
-        print(f"📄 Total Chunks: {len(chunks)}")
-
-        # Process chunks
-        chunk_summaries = []
-        for index, chunk in enumerate(chunks):
-            print(f"🔹 Summarizing Chunk {index + 1}/{len(chunks)}...")
-            try:
-                summary = summarize_chunk(chunk)
-                if not summary or len(summary.strip()) < 10:
-                    print(f"⚠️  Warning: Chunk {index + 1} produced insufficient summary")
-                    continue
-                chunk_summaries.append(summary)
-            except Exception as e:
-                print(f"⚠️  Warning: Failed to summarize chunk {index + 1}: {str(e)}")
-                continue
-
-        if not chunk_summaries:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Failed to generate summaries for any document chunks"
-            )
-
-        print("🔍 Running Final Legal Analysis...")
-        try:
-            final_output = final_legal_analysis(chunk_summaries)
-        except Exception as e:
+            print(f" Agent analysis failed: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to perform legal analysis: {str(e)}"
             )
-
-        if not final_output or len(final_output.strip()) < 50:
+        
+        # Validate output
+        if not final_output_str or len(final_output_str.strip()) < 50:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Legal analysis produced insufficient output"
@@ -335,16 +302,16 @@ async def check(user=Depends(get_current_user), session: SessionDep = None) -> S
 
         # Cache the result
         try:
-            redis_client.set(content_hash, final_output, ex=60 * 60 * 24)  # 24 hours
+            redis_client.set(content_hash, final_output_str, ex=60 * 60 * 24) 
         except Exception as e:
-            print(f"⚠️  Warning: Failed to cache result: {str(e)}")
+            print(f"  Warning: Failed to cache result: {str(e)}")
 
         # Save to database
         try:
             new_history = ChatHistory(
                 user_email=user["email"],
                 file_key=file_key,
-                response=final_output
+                response=final_output_str
             )
             session.add(new_history)
             session.commit()
@@ -357,7 +324,7 @@ async def check(user=Depends(get_current_user), session: SessionDep = None) -> S
         # Reset message
         app.state.mess = None
 
-        return StatusResponse(response=final_output)
+        return StatusResponse(response=final_output_str)
 
     except HTTPException:
         raise
@@ -379,6 +346,56 @@ async def health_check():
         status="healthy",
         version="1.0.0"
     )
+
+
+@app.get("/health/langgraph")
+async def langgraph_health_check():
+    """
+    LangGraph-specific health check endpoint.
+    Verifies that LangGraph agent is properly configured and functional.
+    
+    - **Returns**: LangGraph health information and configuration status
+    """
+    try:
+        # Check API keys
+        groq_configured = bool(os.getenv("GROQ_API_KEY"))
+        gemini_configured = bool(os.getenv("GEMINI_API_KEY"))
+        
+        # Try to create graph (lightweight check)
+        from agents.langgraph_agent import create_legal_analysis_graph
+        graph = create_legal_analysis_graph()
+        graph_compiled = graph is not None
+        
+        health_status = {
+            "status": "healthy" if (groq_configured and gemini_configured and graph_compiled) else "degraded",
+            "version": "1.0.0",
+            "langgraph": {
+                "graph_compiled": graph_compiled,
+                "groq_api_configured": groq_configured,
+                "gemini_api_configured": gemini_configured,
+                "nodes": ["deduction", "fetch", "summarization", "formatting"]
+            }
+        }
+        
+        if not (groq_configured and gemini_configured):
+            health_status["warnings"] = []
+            if not groq_configured:
+                health_status["warnings"].append("GROQ_API_KEY not configured")
+            if not gemini_configured:
+                health_status["warnings"].append("GEMINI_API_KEY not configured")
+        
+        return JSONResponse(content=health_status)
+        
+    except Exception as e:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "status": "unhealthy",
+                "error": str(e),
+                "langgraph": {"graph_compiled": False}
+            }
+        )
+
 
 app.add_middleware(
     CORSMiddleware,

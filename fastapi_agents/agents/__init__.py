@@ -1,1 +1,1 @@
-from . import agent
+# Legacy agent.py removed - now using langgraph_agent.py

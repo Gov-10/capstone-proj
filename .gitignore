@@ -8,3 +8,7 @@ database.db
 keys.json.base64
 capstone_fastapi.pem
 *.pyc
+.venv/
+venv/
+.vscode/
+__pycache__/
