@@ -28,6 +28,7 @@ redis==7.0.1
 
 # PDF extraction
 PyMuPDF==1.26.6
+pytesseract
 
 # HTTP / Networking
 requests==2.32.5
