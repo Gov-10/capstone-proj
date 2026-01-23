@@ -1,23 +1,39 @@
 "use client";
-import Link from "next/link";
-import { getCurrentUser, signOut } from "aws-amplify/auth";
-import { Hub } from "aws-amplify/utils";
-import React, { useState, useEffect } from "react";
+import Link from 'next/link';
+import { getCurrentUser, signOut } from 'aws-amplify/auth';
+import { Hub } from 'aws-amplify/utils';
+import React, { useState, useEffect } from 'react';
+
+interface User {
+    userId: string;
+    username: string;
+}
 
 const Navbar = () => {
-  const [user, setUser] = useState<any>(null);
+    const [isScrolled, setIsScrolled] = useState(false);
+    const [user, setUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
-      } catch {
-        setUser(null);
-      }
-    };
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 10) {
+                setIsScrolled(true);
+            } else {
+                setIsScrolled(false);
+            }
+        };
 
-    checkUser();
+        const checkUser = async () => {
+            try {
+                const currentUser = await getCurrentUser();
+                setUser(currentUser as User);
+            } catch {
+                setUser(null);
+            }
+        };
+
+        window.addEventListener("scroll", handleScroll);
+        checkUser();
+
     const hubListener = Hub.listen("auth", ({ payload }) => {
       if (payload.event === "signedIn") {
         checkUser();
@@ -27,6 +43,7 @@ const Navbar = () => {
     });
 
     return () => {
+      window.removeEventListener("scroll", handleScroll);
       hubListener();
     };
   }, []);

@@ -105,7 +105,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [focusedInput, setFocusedInput] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
@@ -123,15 +122,16 @@ export default function LoginPage() {
       alert("✅ Logged in with Cognito!");
       router.push("/dashboard");
 
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
       console.error("Login error:", err);
-      alert("❌ Login failed: " + (err.message || err));
+      alert("❌ Login failed: " + errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyPress = (e: any) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !loading && email && password) {
       handleLogin();
     }

@@ -32,7 +32,7 @@ export default function ChatPage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
 
   const [result, setResult] = useState<string | null>(null);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<Array<{timestamp: string; file_key: string; response: string}>>([]);
   const [showHistory, setShowHistory] = useState(false);
 
   /* -------------------- Sign Out -------------------- */
