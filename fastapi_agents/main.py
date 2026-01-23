@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request, status, Depends
 from fastapi.responses import JSONResponse
-from fastapi_agents.auth import get_current_user
+from auth import get_current_user
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import io
