@@ -85,8 +85,13 @@ auth_scheme = HTTPBearer()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials=Depends(auth_scheme)):
     token = credentials.credentials
-    auth = CustomAuth()
-    user  = auth.authenticate(None, token)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-    return user
+    claims = validate_token(token)
+    email =claims.get("email")
+    sub = claims.get("sub")
+    username = claims.get("cognito:username")
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email not present in token"
+        )
+    return {"email": email, "sub": sub, "username": username}
