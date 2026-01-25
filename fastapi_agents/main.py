@@ -44,7 +44,7 @@ ChatHistory = None
 
 # Optional database wiring
 try:
-    from fastapi_agents.database import get_session, SessionDep, User, ChatHistory
+    from database import get_session, SessionDep, User, ChatHistory
     HAS_DB = True
 except Exception as e:
     print(f"[INFO] Database not available: {type(e).__name__}. DB operations disabled.")
