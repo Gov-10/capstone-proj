@@ -393,7 +393,7 @@ def chunk_text(text, chunk_size=4000):
     return [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
 
 def summarize_chunk(chunk: str):
-    from fastapi_agents.agents.agent import get_agent
+    from agents.agent import get_agent
     prompt = f"""
 You are a Legal Document Chunk Summarizer.
 Summarize the following part of a legal document factually,
@@ -409,7 +409,7 @@ Chunk:
 
 
 def final_legal_analysis(chunk_summaries):
-    from fastapi_agents.agents.agent import get_agent
+    from agents.agent import get_agent
     prompt = f"""
 You are a Legal Document Intelligence Agent.
 
