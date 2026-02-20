@@ -1,0 +1,3 @@
+[console_scripts]
+prov-compare = prov.scripts.compare:main
+prov-convert = prov.scripts.convert:main

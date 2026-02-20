@@ -13,10 +13,23 @@ USER_POOL_ID = os.getenv("USER_POOL_ID")
 USER_POOL_CLIENT_ID = os.getenv("USER_POOL_CLIENT_ID")
 
 JWKS_URL = f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com/{USER_POOL_ID}/.well-known/jwks.json"
-JWKS = requests.get(JWKS_URL).json()["keys"]
+
+# Gracefully handle missing Cognito configuration
+JWKS = []
+COGNITO_AVAILABLE = False
+try:
+    if COGNITO_REGION and USER_POOL_ID:
+        JWKS = requests.get(JWKS_URL).json()["keys"]
+        COGNITO_AVAILABLE = True
+except Exception as e:
+    print(f"Warning: Could not fetch JWKS from Cognito: {e}. Running in dev mode without auth.")
+    COGNITO_AVAILABLE = False
 
 
 def validate_token(token: str):
+    # In dev mode without Cognito, allow any token
+    if not COGNITO_AVAILABLE:
+        return {"sub": "dev-user", "email": "dev@example.com"}
 
     # ---- 1. Extract KID --------
     headers = jwt.get_unverified_headers(token)

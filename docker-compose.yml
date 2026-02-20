@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  django_backend:
+    build:
+      context: ./django_back
+      dockerfile: Dockerfile
+    container_name: legal-summarizer-django
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./django_back:/app
+    environment:
+      - DEBUG=1
+      - PYTHONUNBUFFERED=1
+    command: sh -c 'python manage.py collectstatic --no-input && python manage.py runserver 0.0.0.0:8000'
+    depends_on:
+      - db
+    networks:
+      - legal-summarizer-network
+
+  fastapi_backend:
+    build:
+      context: ./fastapi_agents
+      dockerfile: Dockerfile
+    container_name: legal-summarizer-fastapi
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./fastapi_agents:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+    depends_on:
+      - db
+    networks:
+      - legal-summarizer-network
+
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: legal-summarizer-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./front:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - django_backend
+      - fastapi_backend
+    networks:
+      - legal-summarizer-network
+
+  db:
+    image: postgres:15-alpine
+    container_name: legal-summarizer-db
+    environment:
+      - POSTGRES_DB=legal_summarizer
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - legal-summarizer-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: legal-summarizer-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - legal-summarizer-network
+
+volumes:
+  db_data:
+  redis_data:
+
+networks:
+  legal-summarizer-network:
+    driver: bridge

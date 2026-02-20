@@ -1,0 +1,12 @@
+opentelemetry/instrumentation/threading/__init__.py,sha256=0IiSGl7Zl8o0I0AW52YP0xj5tRhAtHzen2aNTB5bN80,5881
+opentelemetry/instrumentation/threading/__pycache__/__init__.cpython-311.pyc,,
+opentelemetry/instrumentation/threading/__pycache__/package.cpython-311.pyc,,
+opentelemetry/instrumentation/threading/__pycache__/version.cpython-311.pyc,,
+opentelemetry/instrumentation/threading/package.py,sha256=duFvqjPgg5va2qxTSXaQYmBBSbIDmUdvkmEIDZUWOg8,630
+opentelemetry/instrumentation/threading/version.py,sha256=tDpqkxYoikovVyp0969IoJH516yw7sMzM-bXai9XQOM,608
+opentelemetry_instrumentation_threading-0.60b1.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+opentelemetry_instrumentation_threading-0.60b1.dist-info/METADATA,sha256=ZaU39hkR3gYuxPyBJC0aDeNWaGyDuM-hL3AzZ0Knj8k,2104
+opentelemetry_instrumentation_threading-0.60b1.dist-info/RECORD,,
+opentelemetry_instrumentation_threading-0.60b1.dist-info/WHEEL,sha256=qtCwoSJWgHk21S1Kb4ihdzI2rlJ1ZKaIurTj_ngOhyQ,87
+opentelemetry_instrumentation_threading-0.60b1.dist-info/entry_points.txt,sha256=ROg9siTOulFwwJJ6aof4zS7q7ubKdgcPxiCMXQJ_o5U,103
+opentelemetry_instrumentation_threading-0.60b1.dist-info/licenses/LICENSE,sha256=xx0jnfkXJvxRnG63LTGOxlggYnIysveWIZ6H3PNdCrQ,11357
